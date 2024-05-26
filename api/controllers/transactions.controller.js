@@ -1,100 +1,59 @@
 import Transaction from "../models/transaction.js";
 
-export const transaction=
-   
-        // const { month, search = '', page = 1, perPage = 10 } = req.query;
-        // const skip = (page - 1) * perPage;
-      
-        // try {
-        //   let filter = { };
-        //   // If month parameter is provided, construct filter to match transactions for that month
-        //   if (month) {
-        //     // Parse month parameter to a Date object
-        //     const monthDate = new Date(`2022-${month}-01`);
-        //     // Extract month and year from the Date object
-        //     const monthValue = monthDate.getMonth() + 1;
-        //     const yearValue = monthDate.getFullYear();
-        //     // Construct filter to match transactions for that month, regardless of the year
-        //     filter = {
-        //       $expr: {
-        //         $and: [
-        //           { $eq: [{ $month: '$dateOfSale' }, monthValue] },
-        //           { $eq: [{ $year: '$dateOfSale' }, yearValue] }
-        //         ]
-        //       }
-        //     };
-        //   }
-      
-        //   // If search parameter is provided, add search filter
-        //   if (search) {
-        //     try{
-        //     filter.$or = [
-        //       { title: { $regex: search, $options: 'i' } },
-        //       { description: { $regex: search, $options: 'i' } },
-        //       { price: parseFloat(search) }
-        //     ];
-        // }
-        // catch(err){
-        //     console.log(err);
-        // }
-        //   }
-      
-        //   // Query MongoDB using pagination and filter
-        //   const transactions = await Transaction.find(filter)
-        //     .skip(skip)
-        //     .limit(perPage);
-      
-        //   // Count total number of transactions for pagination
-        //   const totalTransactions = await Transaction.countDocuments(filter);
-      
-        //   res.json({
-        //     transactions,
-        //     currentPage: page,
-        //     totalPages: Math.ceil(totalTransactions / perPage)
-        //   });
-        // } catch (error) {
-        //   console.error('Error fetching transactions:', error);
-        //   res.status(500).json({ message: 'Error fetching transactions' });
-        // }
-        async (req, res) => {
-            try {
-              const { month, search = '', page = 1, perPage = 10 } = req.query;
-              const skip = (page - 1) * perPage;
-          
-              let filter = {};
-              if (month) {
-                // Construct filter to match transactions for the specified month
-                // Assuming 'dateOfSale' field contains the transaction date
-                filter = {
-                  $expr: {
-                    $eq: [{ $month: '$dateOfSale' }, parseInt(month)]
-                  }
-                };
-              }
-          
-              if (search) {
-                // Add search filter
-                filter.$or = [
-                  { title: { $regex: search, $options: 'i' } },
-                  { description: { $regex: search, $options: 'i' } },
-                  { price: parseFloat(search) }
-                ];
-              }
-          
-              const transactions = await Transaction.find(filter)
-                .skip(skip)
-                .limit(parseInt(perPage));
-          
-              const totalTransactions = await Transaction.countDocuments(filter);
-          
-              res.json({
-                transactions,
-                currentPage: parseInt(page),
-                totalPages: Math.ceil(totalTransactions / parseInt(perPage))
-              });
-            } catch (error) {
-              console.error('Error fetching transactions:', error);
-              res.status(500).json({ message: 'Error fetching transactions' });
-            }
-        }
-      
+export const transaction = async (req, res, next) => {
+  const { month, search = '', page = 1, perPage = 10 } = req.query;
+
+  const skip = (page - 1) * perPage;
+
+  try {
+    let filter = {};
+
+    // Construct filter based on month parameter (if provided)
+    if (month) {
+      try {
+        // Parse month parameter to a valid Date object
+        const monthDate = new Date(`2022-${month}-01`);
+
+        // Extract month and year for filter construction
+        const monthValue = monthDate.getMonth() + 1; // Months are zero-indexed (0-11)
+        const yearValue = monthDate.getFullYear();
+
+        filter = {
+          $expr: {
+            $and: [
+              { $eq: [{ $month: '$dateOfSale' }, monthValue] },
+              { $eq: [{ $year: '$dateOfSale' }, yearValue] },
+            ],
+          },
+        };
+      } catch (error) {
+        console.error('Error parsing month parameter:', error);
+        return res.status(400).json({ message: 'Invalid month format' });
+      }
+    }
+
+    // Add search filter (if provided) with case-insensitive search
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { price: { $eq: parseFloat(search) } }, // Filter by exact price match
+      ];
+    }
+
+    // Execute the Mongoose queries using async/await
+    const [transactions, totalTransactions] = await Promise.all([
+      Transaction.find(filter).skip(skip).limit(perPage),
+      Transaction.countDocuments(filter),
+    ]);
+
+    res.json({
+      transactions,
+      currentPage: page,
+      totalPages: Math.ceil(totalTransactions / perPage),
+    });
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ message: 'Error fetching transactions' });
+  }
+};

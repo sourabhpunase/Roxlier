@@ -100,83 +100,111 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import TransactionsTable from './component/TransactionTable';
-import TransactionsStatistics from './component/TransactionStatistics';
-import  TransactionsBarChart  from './component/TransactionsBarChart';
-import TransactionsPieChart from './component/Piechart';
+import './App.css'
+import TransactionsTable from './component/TransactionTable'; // Import your TransactionsTable component
+import PieChart from './component/Piechart'; // Import your PieChart component
+import BarChart from './component/TransactionsBarChart'; // Import your BarChart component
+import TransactionStatistics from './component/TransactionStatistics';
 
 const App = () => {
-  // State variables
-  const [month, setMonth] = useState('03'); // Default March
   const [transactions, setTransactions] = useState([]);
-  const [totalSaleAmount, setTotalSaleAmount] = useState(0);
+  const [months, setMonths] = useState([
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ]);
+  const [selectedMonth, setSelectedMonth] = useState('March'); // Default to March
+  const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSales, setTotalSales] = useState(0);
   const [totalSoldItems, setTotalSoldItems] = useState(0);
-  const [totalNotSoldItems, setTotalNotSoldItems] = useState(0);
-  const [barChartData, setBarChartData] = useState([]);
-  const [pieChartData, setPieChartData] = useState([]);
+  const [totalNotSoldItems, setTotalNotSoldItems] = useState(0); // Assuming a flag in your API response
 
-  // Fetch data from backend APIs
-  const fetchData = async () => {
-    try {
-      // Fetch transactions for the selected month
-      const transactionsResponse = await fetch(`http://localhost:5000/api/transactions/transaction?month=${month}`);
-     const transdat=await transactionsResponse.json();
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const url = `http://localhost:5000/api/transactions/transaction?month=${selectedMonth}&search=${searchText}&page=${currentPage}`;
+      const response = await fetch(url);
+      const data=await response.json();
+           setTransactions(data.transactions);
+      setTotalPages(data.totalPages);
 
-      setTransactions(transdat.transactions);
+      // Fetch statistics
+      const statsUrl = `http://localhost:5000/api/statistics/statistics?month=${selectedMonth}`; // Replace with your stats API endpoint
+      const statsResponse = await fetch(statsUrl);
+      const statsdata= await statsResponse.json();
 
-      // Fetch statistics for the selected month
-      const statisticsResponse = await fetch(`http://localhost:5000/api/statistics/statistics?month=${month}`);
-      const statdata=await statisticsResponse.json()
-      setTotalSaleAmount(statdata.totalSaleAmount);
-      setTotalSoldItems(statdata.totalSoldItems);
-      setTotalNotSoldItems(statdata.totalNotSoldItems);
+      setTotalSales(statsdata.totalSales);
+      setTotalSoldItems(statsdata.totalSoldItems);
+      setTotalNotSoldItems(statsdata.totalNotSoldItems); // Assuming data structure from your API
+    };
 
-      // Fetch data for the bar chart
-      const barChartResponse = await fetch(`http://localhost:5000/api/barChart/barChart?month=${month}`);
-      const bardata=barChartResponse.json();
+    fetchTransactions();
+  }, [selectedMonth, searchText, currentPage]);
 
-      setBarChartData(bardata);
+  const handleMonthChange = (event) => {
+    setSelectedMonth(event.target.value);
+    setCurrentPage(1); // Reset page on month change
+  };
 
-      // Fetch data for the pie chart
-      const pieChartResponse = await fetch(`http://localhost:5000/api/pieChart/piechart?month=${month}`);
-      const piedata=pieChartResponse.json();
+  const handleSearchChange = (event) => {
+    setSearchText(event.target.value);
+  };
 
-      setPieChartData(piedata);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+  const handleNextClick = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
-  // Fetch data on component mount and when month changes
-  useEffect(() => {
-    fetchData();
-  }, [month]);
+  const handlePreviousClick = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  // ... (Pass props to PieChart and BarChart components as needed)
 
   return (
-    <div>
-      {/* Month selector */}
-      <select value={month} onChange={(e) => setMonth(e.target.value)}>
-        <option value="01">January</option>
-        <option value="02">February</option>
-        <option value="03">March</option>
-        {/* Add other months */}
-      </select>
+    <div className="transactions-page">
+      <h1>Transaction Management</h1>
+      <div className="controls">
+        <select value={selectedMonth} onChange={handleMonthChange}>
+          {months.map((month) => (
+            <option key={month} value={month}>
+              {month}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          placeholder="Search Transactions"
+          className="search-input"
+          value={searchText}
+          onChange={handleSearchChange}
+        />
+      </div>
 
-      {/* Transactions Table */}
-      <TransactionsTable transactions={transactions} />
-
-      {/* Transactions Statistics */}
-      <TransactionsStatistics
-        totalSaleAmount={totalSaleAmount}
-        totalSoldItems={totalSoldItems}
-        totalNotSoldItems={totalNotSoldItems}
+      <TransactionsTable
       />
 
-      {/* Transactions Bar Chart */}
-      <TransactionsBarChart data={barChartData} />
+      <h2>Transaction Statistics (Month: {selectedMonth})</h2>
+      <TransactionStatistics/>
 
-      {/* Transactions Pie Chart */}
-      <TransactionsPieChart data={pieChartData} />
+      <h2>Transaction Charts</h2>
+      {/* Render PieChart and BarChart components here */}
+   <BarChart/>
+
+   <PieChart/>
     </div>
   );
 };

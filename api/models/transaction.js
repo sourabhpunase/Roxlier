@@ -8,7 +8,8 @@ const transactionSchema = new mongoose.Schema({
   dateOfSale: Date,
   isSold: Boolean,
   category: String,
-  image:String
+  image:String,
+  
 });
 
 const Transaction = mongoose.model('Transaction', transactionSchema);

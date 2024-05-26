@@ -1,0 +1,92 @@
+/* Dark and Aesthetic CSS */
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .transactions-container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .transactions-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ffffff;
+  }
+  
+  .transactions-container label {
+    font-weight: bold;
+    color: #ffffff;
+  }
+  
+  .transactions-container select {
+    margin-left: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #e0e0e0;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  table th, table td {
+    padding: 12px;
+    border: 1px solid #555;
+    text-align: left;
+    color: #e0e0e0;
+  }
+  
+  table th {
+    background-color: #333;
+  }
+  
+  table tr:nth-child(even) {
+    background-color: #2a2a2a;
+  }
+  
+
+  button{
+    background-color: aquamarine;
+  }
+ 
+  .transaction-row-enter {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  
+  .transaction-row-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
+  .transaction-row-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .transaction-row-exit-active {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 300ms, transform 300ms;
+  }
+  
